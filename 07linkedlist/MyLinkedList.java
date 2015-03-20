@@ -1,4 +1,4 @@
-public class MyLinkedList<E> {
+public class MyLinkedList<E> implements Iterable<E> {
 
 	private class LNode<E> {
 		private E data;
@@ -20,6 +20,26 @@ public class MyLinkedList<E> {
 		}
 		public void setNext(LNode<E> n) {
 			next = n;
+		}
+	}
+
+	private class MLLIterator<E> implements java.util.Iterator<E> {
+		private LNode<E> p;
+		public MLLIterator(LNode<E> h) {
+			p = h;
+		}
+		public boolean hasNext() {
+			return p != null;
+		}
+		public E next() {
+			if (!hasNext())
+				throw new java.util.NoSuchElementException();
+			E result = p.getData();
+			p = p.getNext();
+			return result;
+		}
+		public void remove() {
+			throw new java.lang.UnsupportedOperationException();
 		}
 	}
 
@@ -141,6 +161,10 @@ public class MyLinkedList<E> {
 			pointer = pointer.getNext();
 		}
 		return -1;
+	}
+
+	public MLLIterator<E> iterator() {
+		return new MLLIterator<E>(head);
 	}
 
 }
