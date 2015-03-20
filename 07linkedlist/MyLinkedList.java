@@ -46,7 +46,7 @@ public class MyLinkedList<E> {
 	}
 
 	public E get(int p) {
-		if (p >= size)
+		if (p >= size || p < 0)
 			throw new java.lang.IndexOutOfBoundsException();
 		if (p == 0)
 			return head.getData();
@@ -59,7 +59,7 @@ public class MyLinkedList<E> {
 	}
 
 	public E set(int p, E d) {
-		if (p >= size)
+		if (p >= size || p < 0)
 			throw new java.lang.IndexOutOfBoundsException();
 		if (p == 0) {
 			E result = head.getData();
@@ -93,7 +93,7 @@ public class MyLinkedList<E> {
 	}
 
 	public void add(int p, E d) {
-		if (p > size)
+		if (p > size || p < 0)
 			throw new java.lang.IndexOutOfBoundsException();
 		if (p == size) {
 			add(d);
@@ -115,7 +115,7 @@ public class MyLinkedList<E> {
 	}
 
 	public E remove(int p) {
-		if (p >= size)
+		if (p >= size || p < 0)
 			throw new java.lang.IndexOutOfBoundsException();
 		if (p == 0) {
 			E result = head.getData();
