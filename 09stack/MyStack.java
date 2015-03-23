@@ -2,16 +2,16 @@ import java.util.LinkedList;
 public class MyStack<E> {
 	LinkedList<E> objects = new LinkedList<E>();
 	public boolean empty() {
-		return objects.isEmpty();
+		return objects.size() == 0;
 	}
 	public E peek() {
-		return objects.getFirst();
+		return objects.get(0);
 	}
 	public E pop() {
-		return objects.removeFirst();
+		return objects.remove(0);
 	}
 	public E push(E item) {
-		objects.addFirst(item);
+		objects.add(0, item);
 		return item;
 	}
 	public int search(Object o) {
