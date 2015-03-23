@@ -1,5 +1,5 @@
 import java.util.LinkedList;
-public class myStack<E> {
+public class MyStack<E> {
 	LinkedList<E> objects = new LinkedList<E>();
 	public boolean empty() {
 		return objects.isEmpty();
