@@ -4,19 +4,19 @@ public class MyDeque<E> {
 	private E[] objects;
 	private int head, size, capacity;
 
-    @SuppressWarnings("unchecked")
-    public MyDeque(int c) {
-        objects = (E[]) new Object[c];
-        capacity = c;
-    }
+	@SuppressWarnings("unchecked")
+	public MyDeque(int c) {
+		objects = (E[]) new Object[c];
+		capacity = c;
+	}
 
-    @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public MyDeque() {
 		objects = (E[]) new Object[10];
 		capacity = 10;
 	}
 
-    @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	private void resize() {
 		E[] doubleObjects = (E[]) new Object[2 * capacity];
 		for (int i = 0; i < size; i++)
