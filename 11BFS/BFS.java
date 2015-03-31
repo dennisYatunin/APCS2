@@ -51,8 +51,8 @@ public class BFS {
 		}
 	}
 
-	private char[][] maze, copyOfMaze;
-	private Pos start, end;
+	private char[][] maze;
+	private Pos start;
 	private Queue possiblePositions;
 
 	public BFS(String filename) throws IOException {
@@ -74,8 +74,6 @@ public class BFS {
 					emptyPositions++;
 				else if (maze[r][c] == 'S')
 					start = new Pos(r, c);
-				else if (maze[r][c] == 'E')
-					end = new Pos(r, c);
 			}
 		possiblePositions = new Queue(emptyPositions + 2);
 		possiblePositions.add(start);
