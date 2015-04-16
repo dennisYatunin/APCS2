@@ -38,35 +38,36 @@ public class Maze {
 		private int mode;
 		public Frontier(int capacity) {
 			positions = new Pos[capacity];
-			currentPos = endPos = 0;
 		}
 		public void setMode(int m) {
 			mode = m;
 		}
 		public void add(Pos p) {
-			positions[endPos] = p;
-			endPos++;
+			positions[endPos++] = p;
 		}
 		public Pos remove() {
-			if (mode == BFS) {
-				currentPos++;
-				return positions[currentPos - 1];
-			}
+			if (mode == BFS)
+				return positions[currentPos++];
 			// else if mode == DFS
-			endPos--;
-			return positions[endPos + 1];
+			return positions[--endPos];
 		}
 		public Pos peek() {
 			if (mode == BFS)
 				return positions[currentPos];
 			// else if mode == DFS
-			return positions[endPos];
+			return positions[endPos - 1];
+		}
+		public int size() {
+			return endPos - currentPos;
+		}
+		public void clear() {
+			currentPos = endPos = 0;
 		}
 	}
 
 	private char[][] maze;
 	private int maxx, maxy;
-	private Pos start;
+	private Pos start, end;
 	private Frontier possiblePositions;
 	private int[] solution;
 
@@ -84,21 +85,20 @@ public class Maze {
 				maxy++;
 			}
 			maze = new char[maxy][maxx];
-			int emptyPositions = 0;
+			int emptyPositions = 1;
 			char charHere;
 			for(int i = 0; i < file.length(); i++) {
 				charHere = file.charAt(i);
 				maze[i / maxx][i % maxx] = charHere;
 				if (charHere == ' ')
 					emptyPositions++;
-				if(charHere == 'S'){
+				else if(charHere == 'S')
 					start = new Pos(i / maxx, i % maxx);
-					emptyPositions++;
-				}
+				else if(charHere == 'E')
+					end = new Pos(i / maxx, i % maxx);
 			}
 			possiblePositions = new Frontier(emptyPositions);
-			possiblePositions.add(start);
-			System.out.println(this);
+			solution = new int[0];
 		}
 		catch(IOException e){
 			System.out.println("ERROR: " + filename + " could not be opened.");
@@ -131,8 +131,11 @@ public class Maze {
 
 	public String solve(boolean animate, int mode) {
 		possiblePositions.setMode(mode);
+		possiblePositions.clear();
+		possiblePositions.add(start);
 		Pos posHere = null;
-		while (possiblePositions.peek() != null) {
+		// edge cases for the win...
+		while (possiblePositions.size() > 0) {
 			posHere = possiblePositions.remove();
 			maze[posHere.row()][posHere.col()] = 'x';
 			if (posHere.col() < maxx - 1 && maze[posHere.row()][posHere.col() + 1] == ' ')
@@ -149,33 +152,82 @@ public class Maze {
 				(posHere.row() > 0 && maze[posHere.row() - 1][posHere.col()] == 'E'))
 				break;
 			if (animate)
-				System.out.println(toString());
+				System.out.println(toString(animate));
 		}
-		if (possiblePositions.peek() == null) {
-			if (solution == null)
-				solution = new int[0];
+		if (possiblePositions.size() == 0)
 			return "NO SOLUTION";
-		}
 		int r, c;
 		for (r = 0; r < maze.length; r++)
 			for (c = 0; c < maze[0].length; c++)
 				if (maze[r][c] == 'x')
 					maze[r][c] = ' ';
+		if (solution.length == 0) {
+			possiblePositions.setMode(DFS);
+			possiblePositions.clear();
+		}
 		while (!posHere.equals(start)) {
+			if (solution.length == 0)
+				possiblePositions.add(posHere);
 			maze[posHere.row()][posHere.col()] = 'x';
 			posHere = posHere.previous();
+		}
+		if (solution.length == 0) {
+			solution = new int[2 * possiblePositions.size() + 4];
+			solution[0] = start.row();
+			solution[1] = start.col();
+			int counter = 2;
+			while (possiblePositions.size() > 0) {
+				posHere = possiblePositions.remove();
+				solution[counter++] = posHere.row();
+				solution[counter++] = posHere.col();
+			}
+			solution[counter++] = end.row();
+			solution[counter] = end.col();
 		}
 		maze[start.row()][start.col()] = 'S';
 		return "SOLUTION:\n" + toString();
 	}
 
+	public boolean solveBFS(boolean animate){
+		solve(animate, BFS);
+		return solution.length > 0;
+	}
+
+	public boolean solveDFS(boolean animate){
+		solve(animate, DFS);
+		return solution.length > 0;
+	}
+
+	public boolean solveBFS(){
+		return solveBFS(false);
+	}
+	public boolean solveDFS(){
+		return solveDFS(false);
+	}
+
+	public int[] solutionCoordinates(){
+		return solution;
+	}
+
+	public String solution() {
+		String result = "[";
+		int counter = 0;
+		while (counter < solution.length - 2)
+			result += "(" + solution[counter++] + "," + solution[counter++] + ")->";
+		result += "(" + solution[counter++] + "," + solution[counter++] + ")]";
+		return result;
+	}
+
+/*
 	public static void main(String[] args) {
 		if (args.length == 0) {
 			System.out.println("Proper Usage Is: java Maze \"filename\"");
 			System.exit(1);
 		}
 		Maze maze = new Maze(args[0]);
-		System.out.println(maze.solve(false, BFS));
+		System.out.println(maze.solveBFS());
+		System.out.println(maze.solution());
 	}
+*/
 
 }
