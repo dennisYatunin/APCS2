@@ -5,17 +5,20 @@ public class Maze {
 
 	private final static int BFS = 0;
 	private final static int DFS = 1;
+	private final static int BEST = 2;
+	private final static int ASTAR = 3;
 
 	private class Pos {
-		private int row, col;
+		private int row, col, numPrevious;
 		private Pos previous;
 		public Pos(int r, int c) {
 			row = r;
 			col = c;
 		}
-		public Pos(int r, int c, Pos p) {
+		public Pos(int r, int c, int n, Pos p) {
 			row = r;
 			col = c;
+			numPrevious = n;
 			previous = p;
 		}
 		public int row() {
@@ -24,20 +27,30 @@ public class Maze {
 		public int col() {
 			return col;
 		}
+		public int numPrevious() {
+			return numPrevious;
+		}
 		public Pos previous() {
 			return previous;
 		}
 		public boolean equals(Pos p) {
 			return row == p.row() && col == p.col();
 		}
+		public int distanceTo(Pos p) {
+			return
+			((row - p.row() >= 0) ? row - p.row() : p.row() - row) +
+			((col - p.col() >= 0) ? col - p.col() : p.col() - col);
+		}
 	}
 
 	private class Frontier {
 		private Pos[] positions;
+		private int[] stepCount;
 		private int currentPos, endPos;
 		private int mode;
 		public Frontier(int capacity) {
 			positions = new Pos[capacity];
+			stepCount = new int[capacity];
 		}
 		public void setMode(int m) {
 			mode = m;
@@ -46,10 +59,25 @@ public class Maze {
 			positions[endPos++] = p;
 		}
 		public Pos remove() {
-			if (mode == BFS)
-				return positions[currentPos++];
-			// else if mode == DFS
-			return positions[--endPos];
+			int target;
+			Pos result;
+			switch (mode) {
+				case BFS:
+					return positions[currentPos++];
+				case DFS:
+					return positions[--endPos];
+				case BEST:
+					target = findMinBEST(end);
+					result = positions[target];
+					positions[target] = positions[--endPos];
+					return result;
+				case ASTAR:
+					target = findMinASTAR(end);
+					result = positions[target];
+					positions[target] = positions[--endPos];
+					return result;
+			}
+			return null;
 		}
 		public Pos peek() {
 			if (mode == BFS)
@@ -62,6 +90,26 @@ public class Maze {
 		}
 		public void clear() {
 			currentPos = endPos = 0;
+		}
+		public int findMinBEST(Pos p) {
+			int result = currentPos;
+			int distanceToResult = p.distanceTo(positions[currentPos]);
+			for (int pointer = currentPos + 1; pointer < endPos; pointer++)
+				if (p.distanceTo(positions[pointer]) < distanceToResult) {
+					result = pointer;
+					distanceToResult = p.distanceTo(positions[pointer]);
+				}
+			return result;
+		}
+		public int findMinASTAR(Pos p) {
+			int result = currentPos;
+			int distanceToResultPlusNumPrevious = p.distanceTo(positions[currentPos]) + positions[currentPos].numPrevious();
+			for (int pointer = currentPos + 1; pointer < endPos; pointer++)
+				if (p.distanceTo(positions[pointer]) + positions[pointer].numPrevious() < distanceToResultPlusNumPrevious) {
+					result = pointer;
+					distanceToResultPlusNumPrevious = p.distanceTo(positions[pointer]) + positions[pointer].numPrevious();
+				}
+			return result;
 		}
 	}
 
@@ -129,7 +177,7 @@ public class Maze {
 		return toString();
 	}
 
-	public String solve(boolean animate, int mode) {
+	public boolean solve(boolean animate, int mode) {
 		possiblePositions.setMode(mode);
 		possiblePositions.clear();
 		possiblePositions.add(start);
@@ -139,13 +187,13 @@ public class Maze {
 			posHere = possiblePositions.remove();
 			maze[posHere.row()][posHere.col()] = 'x';
 			if (posHere.col() < maxx - 1 && maze[posHere.row()][posHere.col() + 1] == ' ')
-				possiblePositions.add(new Pos(posHere.row(), posHere.col() + 1, posHere));
+				possiblePositions.add(new Pos(posHere.row(), posHere.col() + 1, posHere.numPrevious() + 1, posHere));
 			if (posHere.col() > 0 && maze[posHere.row()][posHere.col() - 1] == ' ')
-				possiblePositions.add(new Pos(posHere.row(), posHere.col() - 1, posHere));
+				possiblePositions.add(new Pos(posHere.row(), posHere.col() - 1, posHere.numPrevious() + 1, posHere));
 			if (posHere.row() < maxy - 1 && maze[posHere.row() + 1][posHere.col()] == ' ')
-				possiblePositions.add(new Pos(posHere.row() + 1, posHere.col(), posHere));
+				possiblePositions.add(new Pos(posHere.row() + 1, posHere.col(), posHere.numPrevious() + 1, posHere));
 			if (posHere.row() > 0 && maze[posHere.row() - 1][posHere.col()] == ' ')
-				possiblePositions.add(new Pos(posHere.row() - 1, posHere.col(), posHere));
+				possiblePositions.add(new Pos(posHere.row() - 1, posHere.col(), posHere.numPrevious() + 1, posHere));
 			if ((posHere.col() < maxx - 1 && maze[posHere.row()][posHere.col() + 1] == 'E') ||
 				(posHere.col() > 0 && maze[posHere.row()][posHere.col() - 1] == 'E') ||
 				(posHere.row() < maxy - 1 && maze[posHere.row() + 1][posHere.col()] == 'E') ||
@@ -155,54 +203,63 @@ public class Maze {
 				System.out.println(toString(animate));
 		}
 		if (possiblePositions.size() == 0)
-			return "NO SOLUTION";
+			return false;
 		int r, c;
 		for (r = 0; r < maze.length; r++)
 			for (c = 0; c < maze[0].length; c++)
 				if (maze[r][c] == 'x')
 					maze[r][c] = ' ';
+		boolean notSolvedBefore = false;
 		if (solution.length == 0) {
-			possiblePositions.setMode(DFS);
-			possiblePositions.clear();
-		}
-		while (!posHere.equals(start)) {
-			if (solution.length == 0)
-				possiblePositions.add(posHere);
-			maze[posHere.row()][posHere.col()] = 'x';
-			posHere = posHere.previous();
-		}
-		if (solution.length == 0) {
-			solution = new int[2 * possiblePositions.size() + 4];
+			notSolvedBefore = true;
+			solution = new int[posHere.numPrevious() * 2 + 4];
 			solution[0] = start.row();
 			solution[1] = start.col();
-			int counter = 2;
-			while (possiblePositions.size() > 0) {
-				posHere = possiblePositions.remove();
-				solution[counter++] = posHere.row();
-				solution[counter++] = posHere.col();
+			solution[solution.length - 2] = end.row();
+			solution[solution.length - 1] = end.col();
+		}
+		while (!posHere.equals(start)) {
+			if (notSolvedBefore) {
+				solution[posHere.numPrevious() * 2] = posHere.row();
+				solution[posHere.numPrevious() * 2 + 1] = posHere.col();
 			}
-			solution[counter++] = end.row();
-			solution[counter] = end.col();
+			maze[posHere.row()][posHere.col()] = 'P';
+			posHere = posHere.previous();
 		}
 		maze[start.row()][start.col()] = 'S';
-		return "SOLUTION:\n" + toString();
+		return true;
 	}
 
 	public boolean solveBFS(boolean animate){
-		solve(animate, BFS);
-		return solution.length > 0;
+		return solve(animate, BFS);
 	}
 
 	public boolean solveDFS(boolean animate){
-		solve(animate, DFS);
-		return solution.length > 0;
+		return solve(animate, DFS);
+	}
+
+	public boolean solveBEST(boolean animate){
+		return solve(animate, BEST);
+	}
+
+	public boolean solveASTAR(boolean animate){
+		return solve(animate, ASTAR);
 	}
 
 	public boolean solveBFS(){
 		return solveBFS(false);
 	}
+
 	public boolean solveDFS(){
 		return solveDFS(false);
+	}
+
+	public boolean solveBEST(){
+		return solveBEST(false);
+	}
+
+	public boolean solveASTAR(){
+		return solveASTAR(false);
 	}
 
 	public int[] solutionCoordinates(){
