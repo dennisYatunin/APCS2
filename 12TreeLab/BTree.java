@@ -37,10 +37,10 @@ public class BTree<E> {
 		}
 	}
 
-	private TreeNode<E> root;
+	private TreeNode<E> root = new TreeNode<E>(null);
 
 	public void add(E d) {
-		if (root == null)
+		if (root.getData() == null)
 			root.setData(d);
 		else add(root, new TreeNode<E>(d));
 	}
@@ -63,28 +63,28 @@ public class BTree<E> {
 		System.out.println();
 	}
 
-	public void preOrder(TreeNode<E> curr) {
-		System.out.print(curr + ((curr.getLeft() != null || curr.getRight() != null) ? ", " : ""));
+	private void preOrder(TreeNode<E> curr) {
+		System.out.print(curr + " ");
 		if (curr.getLeft() != null)
 			preOrder(curr.getLeft());
 		if (curr.getRight() != null)
 			preOrder(curr.getRight());
 	}
 
-	public void inOrder(TreeNode<E> curr) {
+	private void inOrder(TreeNode<E> curr) {
 		if (curr.getLeft() != null)
 			preOrder(curr.getLeft());
-		System.out.print(curr + ((curr.getLeft() != null || curr.getRight() != null) ? ", " : ""));
+		System.out.print(curr + " ");
 		if (curr.getRight() != null)
 			preOrder(curr.getRight());
 	}
 
-	public void postOrder(TreeNode<E> curr) {
+	private void postOrder(TreeNode<E> curr) {
 		if (curr.getLeft() != null)
 			preOrder(curr.getLeft());
 		if (curr.getRight() != null)
 			preOrder(curr.getRight());
-		System.out.print(curr + ((curr.getLeft() != null || curr.getRight() != null) ? ", " : ""));
+		System.out.print(curr + " ");
 	}
 
 	public int getHeight() {
@@ -100,6 +100,10 @@ public class BTree<E> {
 				subtreeHeight = getHeight(curr.getRight());
 		subtreeHeight++;
 		return subtreeHeight;
+	}
+
+	public String toString() {
+
 	}
 
 	public static void main(String[] args) {
