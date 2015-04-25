@@ -37,11 +37,11 @@ public class BTree<E> {
 		}
 	}
 
-	private TreeNode<E> root = new TreeNode<E>(null);
+	private TreeNode<E> root;
 
 	public void add(E d) {
-		if (root.getData() == null)
-			root.setData(d);
+		if (root == null)
+			root = new TreeNode<E>(d);
 		else add(root, new TreeNode<E>(d));
 	}
 
@@ -54,12 +54,14 @@ public class BTree<E> {
 	}
 
 	public void traverse(int mode) {
-		if (mode == PRE_ORDER)
-			preOrder(root);
-		else if (mode == IN_ORDER)
-			inOrder(root);
-		else // if mode == POST_ORDER
-			postOrder(root);
+		if (root != null) {
+			if (mode == PRE_ORDER)
+				preOrder(root);
+			else if (mode == IN_ORDER)
+				inOrder(root);
+			else // if mode == POST_ORDER
+				postOrder(root);
+		}
 		System.out.println();
 	}
 
@@ -73,21 +75,23 @@ public class BTree<E> {
 
 	private void inOrder(TreeNode<E> curr) {
 		if (curr.getLeft() != null)
-			preOrder(curr.getLeft());
+			inOrder(curr.getLeft());
 		System.out.print(curr + " ");
 		if (curr.getRight() != null)
-			preOrder(curr.getRight());
+			inOrder(curr.getRight());
 	}
 
 	private void postOrder(TreeNode<E> curr) {
 		if (curr.getLeft() != null)
-			preOrder(curr.getLeft());
+			postOrder(curr.getLeft());
 		if (curr.getRight() != null)
-			preOrder(curr.getRight());
+			postOrder(curr.getRight());
 		System.out.print(curr + " ");
 	}
 
 	public int getHeight() {
+		if (root == null)
+			return 0;
 		return getHeight(root);
 	}
 
@@ -102,15 +106,62 @@ public class BTree<E> {
 		return subtreeHeight;
 	}
 
-	public String toString() {
+	private String spaces(double n) {
+		// returns a string of n spaces
+		String result = "";
+		for (int i = 0; i < n; i++)
+			result += " ";
+		return result;
+	}
 
+	private String getLevel(TreeNode<E> curr, int currLevel, int targetLevel, int height) {
+		if (currLevel == 1)
+			return curr.toString() + spaces(Math.pow(2, height - targetLevel + 1) - 1);
+		String result = "";
+		if (curr.getLeft() != null)
+			result += getLevel(curr.getLeft(), currLevel - 1, targetLevel, height);
+		else result += spaces(Math.pow(2, height - targetLevel + currLevel - 1));
+		if (curr.getRight() != null)
+			result += getLevel(curr.getRight(), currLevel - 1, targetLevel, height);
+		else result += spaces(Math.pow(2, height - targetLevel + currLevel - 1));
+		return result;
+	}
+
+	/*
+		getLevel will produce Strings that look like:
+
+		._______________________________
+		._______________._______________
+		._______._______._______._______
+		.___.___.___.___.___.___.___.___
+		._._._._._._._._._._._._._._._._
+
+		toString will modify those levels to look like:
+
+		_______________.
+		_______._______________.
+		___._______._______._______.
+		_.___.___.___.___.___.___.___.
+		._._._._._._._._._._._._._._._.
+	*/
+
+	public String toString() {
+		String result = "";
+		if (root != null) {
+			int height = getHeight();
+			for (int level = 1; level <= height; level++)
+				result += spaces(Math.pow(2, height - level) - 1) +
+					getLevel(root, level, level, height) +
+					"\n";
+		}
+		return result;
 	}
 
 	public static void main(String[] args) {
 
 		BTree<Integer> t = new BTree<Integer>();
 
-		for (int i=0; i < 8; i++)
+		for (int i = 0; i < 10; i++)
 			t.add(i);
 		System.out.println("Pre-order: ");
 		t.traverse(PRE_ORDER);
@@ -120,7 +171,8 @@ public class BTree<E> {
 		t.traverse(POST_ORDER);
 		System.out.println("Height: " + t.getHeight());
 
-		//System.out.println(t);
+		System.out.println(t);
+
 	}
 
 }
