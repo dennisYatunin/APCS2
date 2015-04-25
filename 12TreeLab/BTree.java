@@ -151,7 +151,7 @@ public class BTree<E> {
 			int height = getHeight();
 			for (int level = 1; level <= height; level++)
 				result += spaces(Math.pow(2, height - level) - 1) +
-					getLevel(root, level, level, height) +
+					getLevel(root, level, level, height).replaceFirst("\\s+$", "") +
 					"\n";
 		}
 		return result;
