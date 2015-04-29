@@ -106,29 +106,41 @@ public class BTree<E> {
 		return subtreeHeight;
 	}
 
+	private int maxLength() {
+		// returns the minimum number of characters required
+		// to print the data from any node in the tree
+		if (root == null)
+			return 0;
+		return maxLength(root);
+	}
+
+	private int maxLength(TreeNode<E> curr) {
+		int max = curr.toString().length();
+		int temp;
+		if (curr.getLeft() != null) {
+			temp = maxLength(curr.getLeft());
+			if (temp > max)
+				max = temp;
+		}
+		if (curr.getRight() != null) {
+			temp = maxLength(curr.getRight());
+			if (temp > max)
+				max = temp;
+		}
+		return max;
+	}
+
 	private String spaces(double n) {
-		// returns a string of n spaces
+		// returns a String of n spaces
 		String result = "";
 		for (int i = 0; i < n; i++)
 			result += " ";
 		return result;
 	}
 
-	private String getLevel(TreeNode<E> curr, int currLevel, int targetLevel, int height) {
-		if (currLevel == 1)
-			return curr.toString() + spaces(Math.pow(2, height - targetLevel + 1) - 1);
-		String result = "";
-		if (curr.getLeft() != null)
-			result += getLevel(curr.getLeft(), currLevel - 1, targetLevel, height);
-		else result += spaces(Math.pow(2, height - targetLevel + currLevel - 1));
-		if (curr.getRight() != null)
-			result += getLevel(curr.getRight(), currLevel - 1, targetLevel, height);
-		else result += spaces(Math.pow(2, height - targetLevel + currLevel - 1));
-		return result;
-	}
-
 	/*
-		getLevel will produce Strings that look like:
+		getLevel will produce a String for each level of the tree.
+		The resulting Strings will look like this:
 
 		._______________________________
 		._______________._______________
@@ -136,24 +148,50 @@ public class BTree<E> {
 		.___.___.___.___.___.___.___.___
 		._._._._._._._._._._._._._._._._
 
-		toString will modify those levels to look like:
+		toString will combine those Strings and provide an output that
+		will look like this:
 
 		_______________.
 		_______._______________.
 		___._______._______._______.
 		_.___.___.___.___.___.___.___.
 		._._._._._._._._._._._._._._._.
+
+		In these diagrams, each dot represents wordLength characters,
+		each underscore represents wordLength spaces, and, for any nodes
+		that are null, the dots will be "replaced" by underscores.
 	*/
 
-	public String toString() {
+	private String getLevel(TreeNode<E> curr, int currLevel, int targetLevel, int height, int wordLength) {
+		if (currLevel == 1)
+			return curr.toString() + spaces(wordLength - curr.toString().length()) +
+				spaces(wordLength * Math.pow(2, height - targetLevel + 1) - wordLength);
 		String result = "";
-		if (root != null) {
-			int height = getHeight();
-			for (int level = 1; level <= height; level++)
-				result += spaces(Math.pow(2, height - level) - 1) +
-					getLevel(root, level, level, height).replaceFirst("\\s+$", "") +
-					"\n";
-		}
+		if (curr.getLeft() != null)
+			result += getLevel(curr.getLeft(), currLevel - 1, targetLevel, height, wordLength);
+		else result += spaces(wordLength * Math.pow(2, height - targetLevel + currLevel - 1));
+		if (curr.getRight() != null)
+			result += getLevel(curr.getRight(), currLevel - 1, targetLevel, height, wordLength);
+		else result += spaces(wordLength * Math.pow(2, height - targetLevel + currLevel - 1));
+		return result;
+	}
+
+	public String toString() {
+		if (root == null)
+			return "";
+		String result = "";
+		int height = getHeight();
+		int wordLength = maxLength();
+		// add the every level of the tree except the last one
+		for (int level = 1; level < height; level++)
+			// remove extra spaces from the end of each level's String to prevent lines from
+			// getting unnecessarily long and add spaces to the front of each level's String
+			// to keep everything centered
+			result += spaces(wordLength * Math.pow(2, height - level) - wordLength) +
+				getLevel(root, level, level, height, wordLength).replaceFirst("\\s+$", "") +
+				"\n";
+		// now add the last level (level = height)
+		result += getLevel(root, height, height, height, wordLength).replaceFirst("\\s+$", "");
 		return result;
 	}
 
@@ -161,7 +199,7 @@ public class BTree<E> {
 
 		BTree<Integer> t = new BTree<Integer>();
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 20; i++)
 			t.add(i);
 		System.out.println("Pre-order: ");
 		t.traverse(PRE_ORDER);
