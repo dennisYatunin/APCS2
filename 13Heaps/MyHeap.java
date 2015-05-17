@@ -1,4 +1,5 @@
 public class MyHeap {
+
 	private int[] nums;
 	private boolean max;
 
@@ -8,11 +9,15 @@ public class MyHeap {
 	}
 
 	public MyHeap() {
-		new MyHeap(true);
+		this(true);
+	}
+
+	public int size() {
+		return nums[0];
 	}
 
 	public int peek() {
-		if (nums[0] < 1)
+		if (nums[0] == 0)
 			throw new java.util.NoSuchElementException();
 		return nums[1];
 	}
@@ -29,42 +34,65 @@ public class MyHeap {
 			extend();
 		nums[pos] = i;
 		int temp;
-		if (max)
-			while (pos > 1 && nums[pos] > nums[pos / 2]) {
-				temp = nums[pos];
-				nums[pos] = nums[pos / 2];
-				nums[pos / 2] = temp;
-				pos /= 2;
-			}
-		else
-			while (pos > 1 && nums[pos] < nums[pos / 2]) {
-				temp = nums[pos];
-				nums[pos] = nums[pos / 2];
-				nums[pos / 2] = temp;
-				pos /= 2;
-			}
+		while (
+			pos > 1 &&
+			((max) ?
+				nums[pos] > nums[pos / 2] :
+				nums[pos] < nums[pos / 2])
+			) {
+			// swap the int at pos with its parent int
+			temp = nums[pos];
+			nums[pos] = nums[pos / 2];
+			nums[pos / 2] = temp;
+			pos /= 2;
+		}
 	}
 
 	public int remove() {
-		int pos = nums[0]--;
-		int replacement = nums[pos];
-		int previous;
-		while (pos > 1) {
-			previous = nums[pos / 2];
-			nums[pos / 2] = replacement;
-			replacement = previous;
-			pos /= 2;
+		if (nums[0] == 0)
+			throw new java.util.NoSuchElementException();
+		int result = nums[1];
+		nums[1] = nums[nums[0]--];
+		int pos = 1;
+		int temp, newPos;
+		while (2 * pos <= nums[0]) {
+			if (2 * pos == nums[0])
+				// if the int at pos only has one child,
+				// make newPos the position of that child
+				newPos = 2 * pos;
+			else {
+				// make newPos the position of pos's biggest or smallest
+				// child, depending on whether it is a max or min heap
+				if (nums[2 * pos] > nums[2 * pos + 1])
+					newPos = (max) ? 2 * pos : 2 * pos + 1;
+				else
+					newPos = (max) ? 2 * pos + 1 : 2 * pos;
+			}
+			if ((max) ?
+				nums[newPos] > nums[pos] :
+				nums[newPos] < nums[pos]
+				) {
+				// swap the int at pos with the int at newPos
+				temp = nums[newPos];
+				nums[newPos] = nums[pos];
+				nums[pos] = temp;
+				// more swapping may still be needed, so keep on looping
+				pos = newPos;
+			}
+			else
+				// if no more swapping is needed, end the loop
+				break;
 		}
-		return replacement;
+		return result;
 	}
 
 	private int maxLength() {
-		// returns the number of digits in the biggest integer in MyHeap
-		int result = nums[1];
+		// returns the greatest length of an int found in MyHeap
+		int result = String.valueOf(nums[1]).length();
 		for (int i = 2; i <= nums[0]; i++)
-			if (nums[i] > result)
-				result = nums[i];
-		return (int) Math.log10(result) + 1;
+			if (String.valueOf(nums[i]).length() > result)
+				result = String.valueOf(nums[i]).length();
+		return result;
 	}
 
 	private String spaces(double n) {
@@ -77,19 +105,68 @@ public class MyHeap {
 	public String toString() {
 		if (nums[0] == 0)
 			return "null\n";
-		int maxLength = maxLength();
 		String result = "";
+		int maxLevel;
+		// find the number of levels in the heap
+		for (
+			maxLevel = 1;
+			Math.pow(2, maxLevel + 1) <= 2 * nums[0];
+			maxLevel++
+			) {};
+		int maxLength = maxLength();
 		int pos = 1;
-		for (int level = 1; Math.pow(2, level) <= nums[0]; level++) {
-			result += spaces(maxLength * Math.pow(2, level - 1) - maxLength);
-			while (pos < Math.pow(2, level) - 1)
+		for (int level = 1; level <= maxLevel; level++) {
+			// add spaces to the left of each line to keep things centered
+			result +=
+				spaces(
+					maxLength * Math.pow(2, maxLevel - level) -
+					maxLength
+					);
+			while (pos < Math.pow(2, level) - 1 && pos < nums[0])
 				result +=
 					nums[pos] +
-					spaces(maxLength - 1 - (int) Math.log10(nums[pos++])) +
-					spaces(maxLength * Math.pow(2, level) - maxLength);
+					spaces(
+						maxLength -
+						String.valueOf(nums[pos++]).length()
+						) +
+					spaces(
+						maxLength * Math.pow(2, maxLevel - level + 1) -
+						maxLength
+						);
 			result += nums[pos++] + "\n";
 		}
 		return result;
+	}
+
+	public static void main(String[] args) {
+		MyHeap maxHeap = new MyHeap();
+		System.out.println(maxHeap);
+		maxHeap.add(10);
+		System.out.println(maxHeap);
+		maxHeap.add(2);
+		System.out.println(maxHeap);
+		maxHeap.add(-6);
+		System.out.println(maxHeap);
+		maxHeap.add(100);
+		System.out.println(maxHeap);
+		maxHeap.add(1);
+		System.out.println(maxHeap);
+		maxHeap.add(2);
+		System.out.println(maxHeap);
+		maxHeap.add(9);
+		System.out.println(maxHeap);
+		maxHeap.add(101);
+		System.out.println(maxHeap);
+		maxHeap.add(-20);
+		System.out.println(maxHeap);
+		maxHeap.add(-10);
+		System.out.println(maxHeap);
+		System.out.println("removing " + maxHeap.remove() + ":");
+		System.out.println(maxHeap);
+		System.out.println("removing " + maxHeap.remove() + ":");
+		System.out.println(maxHeap);
+		System.out.println("removing " + maxHeap.remove() + ":");
+		System.out.println(maxHeap);
 	}
 
 }
